@@ -177,7 +177,7 @@ class Game {
       projectile.update();
       
       // Check collision with player
-      if (projectile.collidesWith(this.player) && !this.player.isInvulnerable) {
+      if (this.checkCollision(projectile, this.player) && !this.player.isInvulnerable) {
         this.player.takeDamage(1);
         this.createExplosion(projectile.pos.x, projectile.pos.y, 5, projectile.size);
         this.enemyProjectiles.splice(i, 1);
@@ -196,7 +196,7 @@ class Game {
       enemy.update();
       
       // Check collision with player
-      if (enemy.collidesWith(this.player) && !this.player.isInvulnerable) {
+      if (this.checkCollision(enemy, this.player) && !this.player.isInvulnerable) {
         this.player.takeDamage(1);
         this.createExplosion(enemy.pos.x, enemy.pos.y, 10, enemy.size);
         this.enemies.splice(i, 1);
@@ -209,11 +209,8 @@ class Game {
       for (let j = this.projectiles.length - 1; j >= 0; j--) {
         const projectile = this.projectiles[j];
         
-        // Improved collision detection
-        const distance = dist(projectile.pos.x, projectile.pos.y, enemy.pos.x, enemy.pos.y);
-        const combinedRadius = (projectile.hitboxSize / 2) + (enemy.hitboxSize / 2);
-        
-        if (distance < combinedRadius) {
+        // Direct collision check
+        if (this.checkCollision(projectile, enemy)) {
           // Apply damage to enemy
           enemy.health -= projectile.damage;
           
@@ -492,7 +489,7 @@ class Game {
   }
   
   // Utility functions
-  createExplosion(x, y, particleCount, size, particleColor) {
+  createExplosion(x, y, particleCount = 10, size = 20, particleColor) {
     for (let i = 0; i < particleCount; i++) {
       this.particles.push(new Particle(x, y, size, particleColor));
     }
@@ -618,5 +615,17 @@ class Game {
     } catch (e) {
       console.warn("Could not start audio context:", e);
     }
+  }
+  
+  // Check for collision between two entities with hitboxes
+  checkCollision(entity1, entity2) {
+    if (!entity1.hitboxSize || !entity2.hitboxSize) {
+      return false;
+    }
+    
+    const distance = dist(entity1.pos.x, entity1.pos.y, entity2.pos.x, entity2.pos.y);
+    const combinedRadius = (entity1.hitboxSize / 2) + (entity2.hitboxSize / 2);
+    
+    return distance < combinedRadius;
   }
 } 

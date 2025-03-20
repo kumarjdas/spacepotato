@@ -4,7 +4,7 @@ class Projectile {
     this.pos = createVector(x, y);
     this.vel = createVector(vx, vy);
     this.size = 15;
-    this.hitboxSize = this.size * 0.8; // Explicitly set hitbox for collision detection
+    this.hitboxSize = this.size * 1.2; // Increase hitbox for better collision detection
     this.damage = 1;
     
     // Visual properties

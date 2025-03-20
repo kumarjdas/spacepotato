@@ -322,20 +322,10 @@ class Game {
     this.powerups.forEach(powerup => powerup.display());
     this.projectiles.forEach(projectile => {
       projectile.display();
-      // Debug: show projectile hitbox
-      noFill();
-      stroke(0, 255, 0);
-      strokeWeight(1);
-      ellipse(projectile.pos.x, projectile.pos.y, projectile.hitboxSize);
     });
     
     this.enemies.forEach(enemy => {
       enemy.display();
-      // Debug: show enemy hitbox
-      noFill();
-      stroke(255, 0, 0);
-      strokeWeight(1);
-      ellipse(enemy.pos.x, enemy.pos.y, enemy.hitboxSize);
     });
     
     this.enemyProjectiles.forEach(projectile => projectile.display());

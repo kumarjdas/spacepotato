@@ -49,7 +49,7 @@ class Enemy {
         this.maxSpeed = baseSpeed;
         this.color = color(200, 50, 50);
         this.scoreValue = scoreValue;
-        this.hitboxSize = this.size * 0.8;
+        this.hitboxSize = this.size * 1.0; // Ensure hitbox matches visual size for consistent collisions
         break;
       
       case 'shooter':
@@ -59,7 +59,7 @@ class Enemy {
         this.maxSpeed = baseSpeed * 0.8;
         this.color = color(50, 100, 200);
         this.scoreValue = scoreValue * 1.5;
-        this.hitboxSize = this.size * 0.8;
+        this.hitboxSize = this.size * 1.0; // Ensure hitbox matches visual size for consistent collisions
         this.canShoot = true;
         break;
       
@@ -70,7 +70,7 @@ class Enemy {
         this.maxSpeed = baseSpeed * 0.6;
         this.color = color(100, 50, 150);
         this.scoreValue = scoreValue * 2;
-        this.hitboxSize = this.size * 0.9;
+        this.hitboxSize = this.size * 1.0; // Ensure hitbox matches visual size for consistent collisions
         break;
       
       case 'zigzag':
@@ -80,9 +80,11 @@ class Enemy {
         this.maxSpeed = baseSpeed * 1.5;
         this.color = color(50, 200, 100);
         this.scoreValue = scoreValue * 1.2;
-        this.hitboxSize = this.size * 0.6;
+        this.hitboxSize = this.size * 1.0; // Ensure hitbox matches visual size for consistent collisions
         break;
     }
+    
+    console.log(`Created ${type} enemy with hitboxSize: ${this.hitboxSize}, health: ${this.health}`);
   }
   
   update() {

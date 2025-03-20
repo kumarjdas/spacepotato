@@ -209,10 +209,17 @@ class Game {
       for (let j = this.projectiles.length - 1; j >= 0; j--) {
         const projectile = this.projectiles[j];
         
-        // Direct collision check
-        if (this.checkCollision(projectile, enemy)) {
+        // More lenient collision check for projectiles
+        const distance = dist(projectile.pos.x, projectile.pos.y, enemy.pos.x, enemy.pos.y);
+        // Use a fixed distance for more consistent hits
+        const hitDistance = 30; // Fixed distance for hit detection
+        
+        if (distance < hitDistance) {
+          console.log(`HIT! Enemy health before: ${enemy.health}`);
+          
           // Apply damage to enemy
           enemy.health -= projectile.damage;
+          console.log(`Enemy health after: ${enemy.health}`);
           
           // Create visual effect
           this.createExplosion(projectile.pos.x, projectile.pos.y, 3, projectile.size);
@@ -313,8 +320,24 @@ class Game {
     
     // Draw game objects
     this.powerups.forEach(powerup => powerup.display());
-    this.projectiles.forEach(projectile => projectile.display());
-    this.enemies.forEach(enemy => enemy.display());
+    this.projectiles.forEach(projectile => {
+      projectile.display();
+      // Debug: show projectile hitbox
+      noFill();
+      stroke(0, 255, 0);
+      strokeWeight(1);
+      ellipse(projectile.pos.x, projectile.pos.y, projectile.hitboxSize);
+    });
+    
+    this.enemies.forEach(enemy => {
+      enemy.display();
+      // Debug: show enemy hitbox
+      noFill();
+      stroke(255, 0, 0);
+      strokeWeight(1);
+      ellipse(enemy.pos.x, enemy.pos.y, enemy.hitboxSize);
+    });
+    
     this.enemyProjectiles.forEach(projectile => projectile.display());
     this.player.display();
     this.particles.forEach(particle => particle.display());
@@ -619,12 +642,29 @@ class Game {
   
   // Check for collision between two entities with hitboxes
   checkCollision(entity1, entity2) {
-    if (!entity1.hitboxSize || !entity2.hitboxSize) {
+    // Check if either entity is missing a hitboxSize
+    if (!entity1 || !entity2) {
+      console.warn("Collision check with null entity");
       return false;
     }
     
+    if (!entity1.hitboxSize || !entity2.hitboxSize) {
+      console.warn(`Missing hitboxSize: entity1=${entity1.hitboxSize}, entity2=${entity2.hitboxSize}`);
+      return false;
+    }
+    
+    // Calculate distance between entities
     const distance = dist(entity1.pos.x, entity1.pos.y, entity2.pos.x, entity2.pos.y);
-    const combinedRadius = (entity1.hitboxSize / 2) + (entity2.hitboxSize / 2);
+    
+    // Calculate combined radius with a slight increase for more reliable hits
+    const combinedRadius = (entity1.hitboxSize / 2) + (entity2.hitboxSize / 2) + 5; // Added 5px buffer
+    
+    // Log collision details if objects are close
+    if (distance < combinedRadius + 50) {
+      console.log(`Collision check: distance=${distance.toFixed(2)}, radius=${combinedRadius.toFixed(2)}, hit=${distance < combinedRadius}`);
+      console.log(`Entity1: x=${entity1.pos.x.toFixed(2)}, y=${entity1.pos.y.toFixed(2)}, hitbox=${entity1.hitboxSize}`);
+      console.log(`Entity2: x=${entity2.pos.x.toFixed(2)}, y=${entity2.pos.y.toFixed(2)}, hitbox=${entity2.hitboxSize}`);
+    }
     
     return distance < combinedRadius;
   }

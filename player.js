@@ -262,14 +262,33 @@ class Player {
       // Reset cooldown
       this.shootCooldown = this.shootCooldownMax;
       
+      // Create projectiles with increased damage
+      const damage = this.activePowerups.powerShot ? 2 : 1;
+      
       if (this.activePowerups.tripleShot) {
         // Triple shot powerup active
-        game.projectiles.push(new Projectile(this.pos.x, this.pos.y, 0, -10)); // Center
-        game.projectiles.push(new Projectile(this.pos.x, this.pos.y, -2, -9)); // Left
-        game.projectiles.push(new Projectile(this.pos.x, this.pos.y, 2, -9)); // Right
+        const center = new Projectile(this.pos.x, this.pos.y, 0, -10);
+        const left = new Projectile(this.pos.x, this.pos.y, -2, -9);
+        const right = new Projectile(this.pos.x, this.pos.y, 2, -9);
+        
+        // Set damage and log
+        center.damage = damage;
+        left.damage = damage;
+        right.damage = damage;
+        
+        console.log(`Shooting triple projectiles, damage=${damage}, hitboxSize=${center.hitboxSize}`);
+        
+        game.projectiles.push(center);
+        game.projectiles.push(left);
+        game.projectiles.push(right);
       } else {
         // Regular single shot
-        game.projectiles.push(new Projectile(this.pos.x, this.pos.y, 0, -10));
+        const projectile = new Projectile(this.pos.x, this.pos.y, 0, -10);
+        projectile.damage = damage;
+        
+        console.log(`Shooting projectile, damage=${damage}, hitboxSize=${projectile.hitboxSize}`);
+        
+        game.projectiles.push(projectile);
       }
       
       // Create muzzle flash effect

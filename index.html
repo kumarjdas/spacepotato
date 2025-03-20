@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Space Potato</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.7.0/p5.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.7.0/addons/p5.sound.min.js"></script>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      background: #000;
+    }
+    canvas {
+      display: block;
+    }
+    #error-message {
+      color: white;
+      background-color: rgba(0,0,0,0.7);
+      padding: 20px;
+      margin: 20px;
+      border-radius: 10px;
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      display: none;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <div id="error-message">
+    <h3>Sound Module Error</h3>
+    <p>To enable sound effects, this game needs to be run from a web server.</p>
+    <p>Try one of these options:</p>
+    <ol>
+      <li>Use a local server like <code>python -m http.server</code> or <code>npm install -g http-server && http-server</code></li>
+      <li>Open this game using a VS Code live server extension</li>
+      <li>Upload to a web hosting service</li>
+    </ol>
+    <p>Click anywhere to continue playing without sound.</p>
+  </div>
+
+  <script>
+    // Handle sound module loading errors
+    window.addEventListener('error', function(e) {
+      if (e.message && (e.message.includes('AudioWorklet') || e.message.includes('blob:null'))) {
+        document.getElementById('error-message').style.display = 'block';
+      }
+    });
+
+    document.addEventListener('click', function() {
+      document.getElementById('error-message').style.display = 'none';
+    });
+  </script>
+  
+  <script src="sketch.js"></script>
+  <script src="player.js"></script>
+  <script src="projectile.js"></script>
+  <script src="enemy.js"></script>
+  <script src="particle.js"></script>
+  <script src="powerup.js"></script>
+  <script src="game.js"></script>
+</body>
+</html> 

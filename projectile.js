@@ -4,6 +4,7 @@ class Projectile {
     this.pos = createVector(x, y);
     this.vel = createVector(vx, vy);
     this.size = 15;
+    this.hitboxSize = this.size * 0.8; // Explicitly set hitbox for collision detection
     this.damage = 1;
     
     // Visual properties
@@ -97,9 +98,15 @@ class Projectile {
   
   // Collision detection
   collidesWith(entity) {
+    if (!entity || !entity.hitboxSize) {
+      console.warn('Warning: Entity missing hitboxSize property in collision check');
+      return false;
+    }
+    
     // Simple circle-based collision detection
     const distance = dist(this.pos.x, this.pos.y, entity.pos.x, entity.pos.y);
-    const combinedRadius = this.size / 2 + entity.hitboxSize / 2;
+    const combinedRadius = this.hitboxSize / 2 + entity.hitboxSize / 2;
+    
     return distance < combinedRadius;
   }
 } 

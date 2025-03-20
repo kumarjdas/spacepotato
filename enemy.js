@@ -240,8 +240,11 @@ class Enemy {
       this.color
     );
     
-    // Add to game's projectiles array
-    game.enemies.push(enemyProjectile);
+    // Add to game's enemy projectiles array
+    if (!game.enemyProjectiles) {
+      game.enemyProjectiles = [];
+    }
+    game.enemyProjectiles.push(enemyProjectile);
     
     // Create small muzzle flash
     game.createExplosion(this.pos.x, this.pos.y, 3, 5, this.color);
@@ -347,16 +350,24 @@ class Enemy {
     // Larger, chunky enemy
     const currentSize = this.size * (1 + this.pulseSize);
     
-    // Main body (slightly asymmetric)
+    // Main body
     fill(this.color);
     noStroke();
+    
+    // Simple wobbling shape
+    push();
     beginShape();
-    for (let angle = 0; angle < TWO_PI; angle += 0.3) {
-      const noise = map(noise(cos(angle), sin(angle), frameCount * 0.01), 0, 1, 0.8, 1.2);
-      const r = currentSize/2 * noise;
-      vertex(r * cos(angle), r * sin(angle));
+    // Use simple polygon approach
+    for (let angle = 0; angle < TWO_PI; angle += PI/4) {
+      // Add some wobble with sine
+      const wobble = sin(frameCount * 0.05 + angle * 2) * 4;
+      const radius = currentSize/2 + wobble;
+      const x = cos(angle) * radius;
+      const y = sin(angle) * radius;
+      vertex(x, y);
     }
     endShape(CLOSE);
+    pop();
     
     // Inner body detail
     fill(this.color.levels[0] * 1.2, this.color.levels[1] * 1.2, this.color.levels[2] * 1.2);

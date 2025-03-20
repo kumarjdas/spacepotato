@@ -165,9 +165,9 @@ class Player {
     // Draw potato shape as a slightly irregular ellipse using beginShape
     beginShape();
     for (let angle = 0; angle < TWO_PI; angle += 0.1) {
-      const xoff = map(cos(angle), -1, 1, 0, 1);
-      const yoff = map(sin(angle), -1, 1, 0, 1);
-      const r = map(noise(xoff, yoff, 1), 0, 1, this.size * 0.8, this.size);
+      // Create an organic wobbling shape
+      const wobble = sin(angle * 3 + frameCount * 0.01) * 0.1 + cos(angle * 2 - frameCount * 0.02) * 0.1;
+      const r = this.size * (0.9 + wobble);
       const x = r * cos(angle);
       const y = r * sin(angle);
       vertex(x, y);

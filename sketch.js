@@ -3,6 +3,8 @@ let game;
 let canvas;
 let screenShake = 0;
 let shakeAmount = 0;
+// Declare noise variable globally to avoid initialization issues
+let noise;
 
 function setup() {
   // Create responsive canvas
@@ -13,10 +15,27 @@ function setup() {
   // Initialize game controller
   game = new Game();
   
+  // Initialize noise function to avoid the initialization error
+  noise = (x, y, z) => {
+    // Simple noise function replacement that uses sin and cos
+    return 0.5 + 0.5 * sin(x * 10) * cos(y * 10 + z);
+  };
+  
+  // Add event listeners for starting audio context
+  document.addEventListener('click', startAudioIfNeeded);
+  document.addEventListener('keydown', startAudioIfNeeded);
+  
   // Disable right-click context menu
   canvas.elt.addEventListener('contextmenu', (e) => {
     e.preventDefault();
   });
+}
+
+// Helper function to start audio on user interaction
+function startAudioIfNeeded() {
+  if (game) {
+    game.startAudioContext();
+  }
 }
 
 function draw() {

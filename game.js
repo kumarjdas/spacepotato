@@ -12,6 +12,7 @@ class Game {
     this.player = new Player();
     this.projectiles = [];
     this.enemies = [];
+    this.enemyProjectiles = [];
     this.particles = [];
     this.powerups = [];
     
@@ -38,6 +39,9 @@ class Game {
       healthBar: color(100, 200, 100),
       healthBarBg: color(60, 60, 60)
     };
+    
+    // Audio context management
+    this.audioContextStarted = false;
     
     // Sounds
     this.soundEnabled = true;
@@ -167,6 +171,25 @@ class Game {
       }
     }
     
+    // Update enemy projectiles
+    for (let i = this.enemyProjectiles.length - 1; i >= 0; i--) {
+      const projectile = this.enemyProjectiles[i];
+      projectile.update();
+      
+      // Check collision with player
+      if (projectile.collidesWith(this.player) && !this.player.isInvulnerable) {
+        this.player.takeDamage(1);
+        this.createExplosion(projectile.pos.x, projectile.pos.y, 5, projectile.size);
+        this.enemyProjectiles.splice(i, 1);
+        continue;
+      }
+      
+      // Remove offscreen projectiles
+      if (projectile.isOffscreen()) {
+        this.enemyProjectiles.splice(i, 1);
+      }
+    }
+    
     // Update enemies
     for (let i = this.enemies.length - 1; i >= 0; i--) {
       const enemy = this.enemies[i];
@@ -185,11 +208,22 @@ class Game {
       // Check collision with projectiles
       for (let j = this.projectiles.length - 1; j >= 0; j--) {
         const projectile = this.projectiles[j];
-        if (enemy.collidesWith(projectile)) {
+        
+        // Improved collision detection
+        const distance = dist(projectile.pos.x, projectile.pos.y, enemy.pos.x, enemy.pos.y);
+        const combinedRadius = (projectile.hitboxSize / 2) + (enemy.hitboxSize / 2);
+        
+        if (distance < combinedRadius) {
+          // Apply damage to enemy
           enemy.health -= projectile.damage;
+          
+          // Create visual effect
           this.createExplosion(projectile.pos.x, projectile.pos.y, 3, projectile.size);
+          
+          // Remove the projectile
           this.projectiles.splice(j, 1);
           
+          // Check if enemy is destroyed
           if (enemy.health <= 0) {
             this.score += enemy.scoreValue;
             this.createExplosion(enemy.pos.x, enemy.pos.y, 15, enemy.size * 1.5);
@@ -284,6 +318,7 @@ class Game {
     this.powerups.forEach(powerup => powerup.display());
     this.projectiles.forEach(projectile => projectile.display());
     this.enemies.forEach(enemy => enemy.display());
+    this.enemyProjectiles.forEach(projectile => projectile.display());
     this.player.display();
     this.particles.forEach(particle => particle.display());
     
@@ -434,6 +469,7 @@ class Game {
     this.player = new Player();
     this.projectiles = [];
     this.enemies = [];
+    this.enemyProjectiles = [];
     this.particles = [];
     this.powerups = [];
     this.score = 0;
@@ -501,6 +537,9 @@ class Game {
   
   // Input handling
   mousePressed() {
+    // Start audio context on any user interaction
+    this.startAudioContext();
+    
     switch(this.gameState) {
       case this.GAME_START:
         if (this.displayButton("START GAME", width / 2, height * 2/3, 200, 50)) {
@@ -525,6 +564,9 @@ class Game {
   }
   
   keyPressed() {
+    // Start audio context on any user interaction
+    this.startAudioContext();
+    
     // Pause game with Escape key
     if (keyCode === ESCAPE && (this.gameState === this.GAME_PLAYING || this.gameState === this.GAME_PAUSED)) {
       this.togglePause();
@@ -560,5 +602,21 @@ class Game {
   // Canvas boundary update for responsive design
   updateBoundaries() {
     this.player.updateBoundaries();
+  }
+  
+  // Handle audio context starting - must be called on user interaction
+  startAudioContext() {
+    if (this.audioContextStarted) return;
+    
+    try {
+      // Get the audio context from p5
+      if (getAudioContext().state !== 'running') {
+        getAudioContext().resume();
+      }
+      this.audioContextStarted = true;
+      console.log("Audio context started");
+    } catch (e) {
+      console.warn("Could not start audio context:", e);
+    }
   }
 } 

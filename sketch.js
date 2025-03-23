@@ -81,6 +81,13 @@ function keyReleased() {
   }
 }
 
+function keyTyped() {
+  if (game) {
+    game.keyTyped();
+  }
+  return false; // Prevent default browser behavior
+}
+
 // Utility function to trigger screen shake
 function applyScreenShake(intensity, duration) {
   screenShake = duration;

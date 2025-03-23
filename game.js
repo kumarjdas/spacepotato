@@ -6,6 +6,7 @@ class Game {
     this.GAME_OVER = 2;
     this.GAME_PAUSED = 3;
     this.GAME_HELP = 4; // New state for help screen
+    this.GAME_NAME_ENTRY = 5; // New state for name entry
     
     this.gameState = this.GAME_START;
     
@@ -26,6 +27,17 @@ class Game {
     this.difficultyTimer = 0;
     this.DIFFICULTY_INCREASE = 30 * 60; // increase difficulty every 30 seconds
     
+    // Name entry variables
+    this.playerName = "POTATO";
+    this.nameEntryActive = false;
+    this.nameEntryMaxLength = 10;
+    this.isNewHighScore = false;
+    
+    // Power-up message display
+    this.powerupMessage = "";
+    this.powerupMessageTimer = 0;
+    this.powerupMessageDuration = 180; // 3 seconds at 60fps
+    
     // High scores
     this.loadHighScores();
     
@@ -41,7 +53,9 @@ class Game {
       buttonHover: color(80, 130, 180),
       buttonText: color(255),
       healthBar: color(100, 200, 100),
-      healthBarBg: color(60, 60, 60)
+      healthBarBg: color(60, 60, 60),
+      inputField: color(40, 40, 60),
+      inputFieldActive: color(50, 50, 80)
     };
     
     // Update background color based on level
@@ -181,6 +195,10 @@ class Game {
         this.displayGame(); // Show game in background
         this.displayHelpScreen();
         break;
+      case this.GAME_NAME_ENTRY:
+        this.displayGameOverScreen();
+        this.displayNameEntryScreen();
+        break;
     }
   }
   
@@ -194,6 +212,11 @@ class Game {
       if (this.levelUpTimer <= 0) {
         this.showLevelUpMessage = false;
       }
+    }
+    
+    // Update powerup message timer if active
+    if (this.powerupMessageTimer > 0) {
+      this.powerupMessageTimer--;
     }
     
     // Update player
@@ -307,6 +330,29 @@ class Game {
         this.createExplosion(powerup.pos.x, powerup.pos.y, 10, powerup.size, color(100, 255, 100));
         this.powerups.splice(i, 1);
         this.playSound("powerup");
+        
+        // Set powerup message based on type
+        let message = "";
+        switch(powerup.type) {
+          case 'tripleShot':
+            message = "Triple Shot: Fire 3 projectiles at once!";
+            break;
+          case 'powerShot':
+            message = "Power Shot: Projectiles deal double damage!";
+            break;
+          case 'shield':
+            message = "Shield: Temporary invulnerability!";
+            break;
+          case 'speedBoost':
+            message = "Speed Boost: Move 50% faster!";
+            break;
+          default:
+            message = `Collected ${powerup.type.toUpperCase()} power-up!`;
+        }
+        
+        this.powerupMessage = message;
+        this.powerupMessageTimer = this.powerupMessageDuration;
+        
         continue;
       }
       
@@ -381,6 +427,15 @@ class Game {
       textSize(24);
       text("Enemies are getting stronger!", width / 2, height / 3 + 50);
     }
+    
+    // Show powerup message if active
+    if (this.powerupMessageTimer > 0) {
+      textAlign(CENTER, CENTER);
+      textSize(20);
+      // Fade out as timer decreases
+      fill(100, 255, 100, map(this.powerupMessageTimer, 0, this.powerupMessageDuration, 0, 255));
+      text(this.powerupMessage, width / 2, height - 150);
+    }
   }
   
   displayHUD() {
@@ -393,6 +448,9 @@ class Game {
     // Level
     textAlign(CENTER, TOP);
     text(`Level ${this.level}`, width / 2, 20);
+    
+    // Level progress bar
+    this.displayLevelProgress();
     
     // Lives
     this.displayLives();
@@ -413,6 +471,31 @@ class Game {
     if (dist(mouseX, mouseY, width - 30, 30) < 15 && mouseIsPressed) {
       this.gameState = this.GAME_HELP;
     }
+  }
+  
+  displayLevelProgress() {
+    // Level progress bar
+    const barWidth = 200;
+    const barHeight = 6;
+    const x = width / 2 - barWidth / 2;
+    const y = 50;
+    
+    // Calculate progress percentage
+    const progressPercent = this.difficultyTimer / this.DIFFICULTY_INCREASE;
+    
+    // Background
+    fill(this.colors.healthBarBg);
+    rect(x, y, barWidth, barHeight, 3);
+    
+    // Progress
+    fill(255, 220, 100);
+    rect(x, y, barWidth * progressPercent, barHeight, 3);
+    
+    // Label
+    textAlign(CENTER, TOP);
+    textSize(12);
+    fill(255);
+    text("NEXT LEVEL", width / 2, y + barHeight + 5);
   }
   
   displayLives() {
@@ -587,8 +670,17 @@ class Game {
   }
   
   gameOver() {
-    this.gameState = this.GAME_OVER;
-    this.saveHighScore(this.score);
+    // Check if score qualifies for high score before changing state
+    if (this.isHighScore(this.score)) {
+      this.isNewHighScore = this.score > 0 && this.highScores.length > 0 && 
+                         this.score >= this.highScores[0].score;
+      this.gameState = this.GAME_NAME_ENTRY;
+      this.playerName = ""; // Clear the player name for entry
+    } else {
+      this.gameState = this.GAME_OVER;
+      // Just save with default name if not a high score
+      this.saveHighScore(this.score);
+    }
   }
   
   togglePause() {
@@ -724,6 +816,22 @@ class Game {
     // Start audio context on any user interaction
     this.startAudioContext();
     
+    // Special handling for name entry
+    if (this.gameState === this.GAME_NAME_ENTRY) {
+      if (keyCode === BACKSPACE) {
+        // Remove the last character when backspace is pressed
+        this.playerName = this.playerName.slice(0, -1);
+        return false; // Prevent browser from navigating back
+      } else if (keyCode === ENTER || keyCode === RETURN) {
+        // Submit name when Enter is pressed
+        if (this.playerName.trim().length > 0) {
+          this.saveHighScore(this.score, this.playerName);
+          this.gameState = this.GAME_OVER;
+        }
+        return false;
+      }
+    }
+    
     // Pause game with Escape key
     if (keyCode === ESCAPE && (this.gameState === this.GAME_PLAYING || this.gameState === this.GAME_PAUSED)) {
       this.togglePause();
@@ -835,9 +943,12 @@ class Game {
       // Only save if score is greater than 0
       if (score <= 0) return;
       
+      // Use the provided name, or a default if empty
+      const name = playerName.trim() || "POTATO";
+      
       // Add new score
       const newScore = {
-        name: playerName,
+        name: name,
         score: score,
         level: this.level,
         date: new Date().toISOString().split('T')[0] // Just the date part YYYY-MM-DD
@@ -1056,5 +1167,85 @@ class Game {
     text("Move: Arrow Keys or WASD", x, currentY);
     text("Shoot: Left Mouse Button or Spacebar", x, currentY + lineHeight);
     text("Pause: ESC key", x, currentY + lineHeight * 2);
+  }
+  
+  displayNameEntryScreen() {
+    // Semi-transparent overlay
+    fill(0, 0, 0, 200);
+    rect(0, 0, width, height);
+    
+    // Title
+    textAlign(CENTER, TOP);
+    textSize(36);
+    fill(255, 255, 0);
+    text("NEW HIGH SCORE!", width / 2, height * 0.25);
+    
+    // Display score
+    textSize(24);
+    fill(this.colors.text);
+    text(`Score: ${this.score} - Level: ${this.level}`, width / 2, height * 0.35);
+    
+    // Name entry field
+    textSize(24);
+    text("Enter your name:", width / 2, height * 0.45);
+    
+    // Input field
+    const fieldWidth = 300;
+    const fieldHeight = 40;
+    const fieldX = width/2 - fieldWidth/2;
+    const fieldY = height * 0.5;
+    
+    // Draw field background
+    fill(this.colors.inputField);
+    stroke(255);
+    strokeWeight(2);
+    rect(fieldX, fieldY, fieldWidth, fieldHeight, 5);
+    
+    // Draw entered name
+    textAlign(LEFT, CENTER);
+    fill(255);
+    noStroke();
+    text(this.playerName + (frameCount % 60 < 30 ? "|" : ""), fieldX + 10, fieldY + fieldHeight/2);
+    
+    // Submit button
+    textAlign(CENTER, CENTER);
+    if (this.displayButton("SUBMIT", width / 2, height * 0.65, 150, 40)) {
+      // Save the score with the entered name
+      this.saveHighScore(this.score, this.playerName);
+      this.gameState = this.GAME_OVER;
+    }
+    
+    // Instructions
+    textSize(16);
+    fill(200);
+    text("Type your name and press SUBMIT or ENTER", width / 2, height * 0.75);
+  }
+  
+  // Handle key typing for name entry
+  keyTyped() {
+    if (this.gameState === this.GAME_NAME_ENTRY) {
+      // Add the typed character to the name if it's a valid character
+      if (this.playerName.length < this.nameEntryMaxLength) {
+        // Only allow alphanumeric characters, spaces, and some punctuation
+        const validChars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 !?-_".split("");
+        if (validChars.includes(key)) {
+          this.playerName += key;
+        }
+      }
+    }
+    // Return false to allow default browser behavior
+    return false;
+  }
+  
+  // Check if score qualifies for high score list
+  isHighScore(score) {
+    if (score <= 0) return false;
+    
+    if (this.highScores.length < 10) {
+      return true; // Less than 10 scores recorded, so automatically qualifies
+    }
+    
+    // Check if score is higher than the lowest score in the top 10
+    return score > this.highScores[this.highScores.length - 1].score;
   }
 } 

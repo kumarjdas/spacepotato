@@ -17,7 +17,7 @@ class Player {
     // Game mechanics
     this.health = 5;
     this.maxHealth = 5;
-    this.lives = 3;
+    this.lives = 2;
     this.shootCooldown = 0;
     this.shootCooldownMax = 15; // frames between shots
     this.isInvulnerable = false;

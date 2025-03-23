@@ -29,14 +29,12 @@ class Enemy {
   
   setPropertiesByType(type, level) {
     // Base stats that get modified by type
-    let baseHealth = 2;
     let baseSize = 35;
     let baseSpeed = 2;
     let baseColor = color(150, 0, 0);
     let scoreValue = 100;
     
-    // Apply level scaling
-    baseHealth = floor(baseHealth * (1 + (level - 1) * 0.5));
+    // Apply level scaling (except health which is handled per type)
     baseSpeed = baseSpeed * (1 + (level - 1) * 0.1);
     scoreValue = scoreValue * level;
     
@@ -44,43 +42,43 @@ class Enemy {
     switch(type) {
       case 'basic':
         // Default enemy - moderate stats, moves in patterns
-        this.health = baseHealth;
+        this.health = 1; // Always just 1 health (easy to kill)
         this.size = baseSize;
         this.maxSpeed = baseSpeed;
         this.color = color(200, 50, 50);
         this.scoreValue = scoreValue;
-        this.hitboxSize = this.size * 1.0; // Ensure hitbox matches visual size for consistent collisions
+        this.hitboxSize = this.size * 1.0;
         break;
       
       case 'shooter':
-        // Ranged enemy - less health, shoots projectiles
-        this.health = max(1, baseHealth - 1);
+        // Ranged enemy - 2 health, shoots projectiles
+        this.health = 2; // Always 2 health as requested
         this.size = baseSize * 0.9;
         this.maxSpeed = baseSpeed * 0.8;
         this.color = color(50, 100, 200);
         this.scoreValue = scoreValue * 1.5;
-        this.hitboxSize = this.size * 1.0; // Ensure hitbox matches visual size for consistent collisions
+        this.hitboxSize = this.size * 1.0;
         this.canShoot = true;
         break;
       
       case 'bomber':
         // Tanky enemy - more health, slower, worth more points
-        this.health = baseHealth + 2;
+        this.health = 3; // Always 3 health (tanky)
         this.size = baseSize * 1.3;
         this.maxSpeed = baseSpeed * 0.6;
         this.color = color(100, 50, 150);
         this.scoreValue = scoreValue * 2;
-        this.hitboxSize = this.size * 1.0; // Ensure hitbox matches visual size for consistent collisions
+        this.hitboxSize = this.size * 1.0;
         break;
       
       case 'zigzag':
-        // Fast, erratic enemy - hard to hit
-        this.health = max(1, baseHealth - 1);
+        // Fast, erratic enemy - hard to hit but only 1 health
+        this.health = 1; // Always 1 health (fragile but fast)
         this.size = baseSize * 0.7;
         this.maxSpeed = baseSpeed * 1.5;
         this.color = color(50, 200, 100);
         this.scoreValue = scoreValue * 1.2;
-        this.hitboxSize = this.size * 1.0; // Ensure hitbox matches visual size for consistent collisions
+        this.hitboxSize = this.size * 1.0;
         break;
     }
     

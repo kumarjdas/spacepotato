@@ -5,6 +5,7 @@ class Game {
     this.GAME_PLAYING = 1;
     this.GAME_OVER = 2;
     this.GAME_PAUSED = 3;
+    this.GAME_HELP = 4; // New state for help screen
     
     this.gameState = this.GAME_START;
     
@@ -25,10 +26,13 @@ class Game {
     this.difficultyTimer = 0;
     this.DIFFICULTY_INCREASE = 30 * 60; // increase difficulty every 30 seconds
     
+    // High scores
+    this.loadHighScores();
+    
     // UI elements
     this.stars = this.createStars(200);
     
-    // Colors
+    // Base colors
     this.colors = {
       background: color(10, 15, 30),
       text: color(255),
@@ -39,6 +43,9 @@ class Game {
       healthBar: color(100, 200, 100),
       healthBarBg: color(60, 60, 60)
     };
+    
+    // Update background color based on level
+    this.updateBackgroundColor();
     
     // Audio context management
     this.audioContextStarted = false;
@@ -51,6 +58,23 @@ class Game {
       console.warn("Sound initialization failed, disabling sound:", e);
       this.soundEnabled = false;
     }
+  }
+  
+  // Update background color based on current level
+  updateBackgroundColor() {
+    // Start with base dark color and make it lighter with each level
+    const baseR = 10;
+    const baseG = 15;
+    const baseB = 30;
+    
+    // Calculate how much to lighten (max 30% lighter at level 10)
+    const lightenFactor = min(0.3, (this.level - 1) * 0.03);
+    
+    const r = baseR + lightenFactor * (255 - baseR);
+    const g = baseG + lightenFactor * (255 - baseG);
+    const b = baseB + lightenFactor * (255 - baseB);
+    
+    this.colors.background = color(r, g, b);
   }
   
   initSounds() {
@@ -153,12 +177,24 @@ class Game {
         this.displayGame();
         this.displayPauseScreen();
         break;
+      case this.GAME_HELP:
+        this.displayGame(); // Show game in background
+        this.displayHelpScreen();
+        break;
     }
   }
   
   // Game state updates
   updateGame() {
     this.updateStars();
+    
+    // Update level up message timer if active
+    if (this.showLevelUpMessage) {
+      this.levelUpTimer--;
+      if (this.levelUpTimer <= 0) {
+        this.showLevelUpMessage = false;
+      }
+    }
     
     // Update player
     this.player.update();
@@ -334,6 +370,16 @@ class Game {
     
     // Display UI
     this.displayHUD();
+    
+    // Show level up message if active
+    if (this.showLevelUpMessage) {
+      textAlign(CENTER, CENTER);
+      textSize(40);
+      fill(255, 255, 0, map(this.levelUpTimer, 0, 120, 0, 255));
+      text(`LEVEL ${this.level}`, width / 2, height / 3);
+      textSize(24);
+      text("Enemies are getting stronger!", width / 2, height / 3 + 50);
+    }
   }
   
   displayHUD() {
@@ -349,6 +395,12 @@ class Game {
     
     // Lives
     this.displayLives();
+    
+    // Help button
+    textSize(16);
+    if (this.displayButton("?", width - 30, 60, 30, 30)) {
+      this.gameState = this.GAME_HELP;
+    }
   }
   
   displayLives() {
@@ -392,12 +444,18 @@ class Game {
     textSize(20);
     text("Arrow keys or WASD to move. Left mouse button to shoot.", width / 2, height / 2);
     
-    // Draw button
+    // Draw buttons
     this.displayButton("START GAME", width / 2, height * 2/3, 200, 50);
+    this.displayButton("HIGH SCORES", width / 2, height * 2/3 + 70, 200, 50);
     
     // Credits
     textSize(16);
     text("Created with p5.js", width / 2, height - 30);
+    
+    // Show high scores if requested
+    if (this.showHighScores) {
+      this.displayHighScores();
+    }
   }
   
   displayGameOverScreen() {
@@ -412,21 +470,45 @@ class Game {
     textAlign(CENTER, CENTER);
     textSize(60);
     fill(this.colors.text);
-    text("GAME OVER", width / 2, height / 3);
+    text("GAME OVER", width / 2, height / 4);
     
     // Score
     textSize(24);
+    const isNewHighScore = this.score > 0 && this.highScores.length > 0 && 
+                         this.score >= this.highScores[0].score && 
+                         this.highScores[0].score !== this.score;
+    this.isNewHighScore = isNewHighScore;
+    
     let scoreText = `Score: ${this.score}`;
-    if (this.score > this.highScore) {
-      this.highScore = this.score;
+    if (isNewHighScore) {
       scoreText += " - NEW HIGH SCORE!";
+      fill(255, 255, 0);
     } else {
       scoreText += ` - High Score: ${this.highScore}`;
+      fill(this.colors.text);
     }
-    text(scoreText, width / 2, height / 2);
+    text(scoreText, width / 2, height / 3);
     
-    // Draw button
-    this.displayButton("PLAY AGAIN", width / 2, height * 2/3, 200, 50);
+    // Draw buttons
+    const buttonY = height * 2/3;
+    const buttonSpacing = 220;
+    
+    fill(this.colors.text);
+    
+    // High scores button
+    if (this.displayButton("HIGH SCORES", width / 2 - buttonSpacing/2, buttonY, 180, 50)) {
+      this.showHighScores = true;
+    }
+    
+    // Play again button
+    if (this.displayButton("PLAY AGAIN", width / 2 + buttonSpacing/2, buttonY, 180, 50)) {
+      this.startGame();
+    }
+    
+    // Show high scores if requested
+    if (this.showHighScores) {
+      this.displayHighScores();
+    }
   }
   
   displayPauseScreen() {
@@ -491,6 +573,7 @@ class Game {
   
   gameOver() {
     this.gameState = this.GAME_OVER;
+    this.saveHighScore(this.score);
   }
   
   togglePause() {
@@ -543,6 +626,13 @@ class Game {
   increaseDifficulty() {
     this.level++;
     this.enemySpawnRate = max(40, this.enemySpawnRate - 10);
+    
+    // Update background color to reflect the new level
+    this.updateBackgroundColor();
+    
+    // Display level up message
+    this.showLevelUpMessage = true;
+    this.levelUpTimer = 120; // Show for 2 seconds
   }
   
   // Input handling
@@ -555,19 +645,65 @@ class Game {
         if (this.displayButton("START GAME", width / 2, height * 2/3, 200, 50)) {
           this.startGame();
         }
-        break;
-      case this.GAME_PLAYING:
-        this.player.shoot();
-        this.playSound("shoot");
-        break;
-      case this.GAME_OVER:
-        if (this.displayButton("PLAY AGAIN", width / 2, height * 2/3, 200, 50)) {
-          this.startGame();
+        
+        // High scores button on start screen
+        if (this.displayButton("HIGH SCORES", width / 2, height * 2/3 + 70, 200, 50)) {
+          this.showHighScores = true;
+        }
+        
+        // Show high scores if requested
+        if (this.showHighScores) {
+          this.displayHighScores();
+          if (this.displayButton("BACK", width / 2, height * 0.85, 150, 40)) {
+            this.showHighScores = false;
+          }
+          return; // Skip other processing when showing high scores
         }
         break;
+        
+      case this.GAME_PLAYING:
+        // Check if help button was clicked (already handled in displayHUD)
+        // Otherwise shoot
+        const helpButtonX = width - 30;
+        const helpButtonY = 60;
+        const helpButtonSize = 30;
+        if (dist(mouseX, mouseY, helpButtonX, helpButtonY) < helpButtonSize) {
+          // Already handled in displayHUD
+        } else {
+          this.player.shoot();
+          this.playSound("shoot");
+        }
+        break;
+        
+      case this.GAME_OVER:
+        // High scores button
+        if (this.displayButton("HIGH SCORES", width / 2 - 110, height * 2/3, 180, 50)) {
+          this.showHighScores = true;
+        }
+        
+        // Play again button
+        if (this.displayButton("PLAY AGAIN", width / 2 + 110, height * 2/3, 180, 50)) {
+          this.startGame();
+        }
+        
+        // Show high scores if requested
+        if (this.showHighScores) {
+          // Back button on high scores screen
+          if (this.displayButton("BACK", width / 2, height * 0.85, 150, 40)) {
+            this.showHighScores = false;
+          }
+        }
+        break;
+        
       case this.GAME_PAUSED:
         if (this.displayButton("RESUME", width / 2, height * 2/3, 200, 50)) {
           this.togglePause();
+        }
+        break;
+        
+      case this.GAME_HELP:
+        if (this.displayButton("RESUME GAME", width / 2, height * 0.9, 200, 40)) {
+          this.gameState = this.GAME_PLAYING;
         }
         break;
     }
@@ -657,5 +793,257 @@ class Game {
     }
     
     return distance < combinedRadius;
+  }
+  
+  // High scores functionality
+  loadHighScores() {
+    try {
+      const savedScores = localStorage.getItem('spacePotatoHighScores');
+      this.highScores = savedScores ? JSON.parse(savedScores) : [];
+      
+      // If no scores yet, initialize with empty array
+      if (!Array.isArray(this.highScores)) {
+        this.highScores = [];
+      }
+      
+      // Sort scores from highest to lowest
+      this.highScores.sort((a, b) => b.score - a.score);
+      
+      // Set current high score from saved scores
+      this.highScore = this.highScores.length > 0 ? this.highScores[0].score : 0;
+      
+      console.log("Loaded high scores:", this.highScores);
+    } catch (e) {
+      console.warn("Error loading high scores:", e);
+      this.highScores = [];
+    }
+  }
+  
+  saveHighScore(score, playerName = "POTATO") {
+    try {
+      // Only save if score is greater than 0
+      if (score <= 0) return;
+      
+      // Add new score
+      const newScore = {
+        name: playerName,
+        score: score,
+        level: this.level,
+        date: new Date().toISOString().split('T')[0] // Just the date part YYYY-MM-DD
+      };
+      
+      this.highScores.push(newScore);
+      
+      // Sort and keep top 10
+      this.highScores.sort((a, b) => b.score - a.score);
+      if (this.highScores.length > 10) {
+        this.highScores = this.highScores.slice(0, 10);
+      }
+      
+      // Save to localStorage
+      localStorage.setItem('spacePotatoHighScores', JSON.stringify(this.highScores));
+      
+      // Update current high score
+      this.highScore = this.highScores[0].score;
+      
+      console.log("Saved high scores:", this.highScores);
+    } catch (e) {
+      console.warn("Error saving high score:", e);
+    }
+  }
+  
+  displayHighScores() {
+    // Background overlay
+    fill(0, 0, 0, 200);
+    rect(0, 0, width, height);
+    
+    // Title
+    textAlign(CENTER, TOP);
+    textSize(36);
+    fill(this.colors.text);
+    text("HIGH SCORES", width / 2, height * 0.1);
+    
+    // Show scores
+    const startY = height * 0.2;
+    const rowHeight = 40;
+    
+    textSize(18);
+    textAlign(CENTER, TOP);
+    
+    if (this.highScores.length === 0) {
+      fill(this.colors.text);
+      text("No high scores yet. Play and be the first!", width / 2, startY + rowHeight * 2);
+    } else {
+      // Header
+      fill(this.colors.scoreText);
+      textAlign(LEFT, TOP);
+      text("RANK", width * 0.2, startY);
+      text("NAME", width * 0.3, startY);
+      text("SCORE", width * 0.5, startY);
+      text("LEVEL", width * 0.65, startY);
+      text("DATE", width * 0.8, startY);
+      
+      line(width * 0.15, startY + rowHeight * 0.8, width * 0.85, startY + rowHeight * 0.8);
+      
+      // Scores
+      for (let i = 0; i < this.highScores.length; i++) {
+        const score = this.highScores[i];
+        const y = startY + (i + 1) * rowHeight;
+        
+        // Highlight current score if it's a new high score
+        if (this.score === score.score && this.isNewHighScore) {
+          fill(255, 255, 100);
+        } else {
+          fill(this.colors.text);
+        }
+        
+        textAlign(LEFT, TOP);
+        text(`${i + 1}.`, width * 0.2, y);
+        text(score.name, width * 0.3, y);
+        text(score.score, width * 0.5, y);
+        text(score.level, width * 0.65, y);
+        text(score.date, width * 0.8, y);
+      }
+    }
+    
+    // Back button
+    this.displayButton("BACK", width / 2, height * 0.85, 150, 40);
+  }
+  
+  displayHelpScreen() {
+    // Semi-transparent overlay
+    fill(0, 0, 0, 200);
+    rect(0, 0, width, height);
+    
+    // Title
+    textAlign(CENTER, TOP);
+    textSize(36);
+    fill(this.colors.text);
+    text("HELP GUIDE", width / 2, height * 0.05);
+    
+    // Content sections
+    const startY = height * 0.15;
+    const sectionHeight = height * 0.4;
+    
+    // Left section: Enemy types
+    this.displayEnemyGuide(width * 0.25, startY, width * 0.4, sectionHeight);
+    
+    // Right section: Powerup types
+    this.displayPowerupGuide(width * 0.75, startY, width * 0.4, sectionHeight);
+    
+    // Controls section
+    this.displayControlsGuide(width / 2, startY + sectionHeight + 30, width * 0.8, height * 0.2);
+    
+    // Back button
+    if (this.displayButton("RESUME GAME", width / 2, height * 0.9, 200, 40)) {
+      this.gameState = this.GAME_PLAYING;
+    }
+  }
+  
+  displayEnemyGuide(x, y, w, h) {
+    textAlign(CENTER, TOP);
+    textSize(24);
+    fill(this.colors.text);
+    text("ENEMY TYPES", x, y);
+    
+    textAlign(LEFT, TOP);
+    textSize(16);
+    const lineHeight = 24;
+    let currentY = y + 40;
+    
+    // Basic enemy
+    fill(200, 50, 50);
+    ellipse(x - w/4, currentY + 10, 20);
+    fill(this.colors.text);
+    text("Basic Enemy - 1 hit point", x - w/4 + 20, currentY);
+    text("Standard movement pattern", x - w/4 + 20, currentY + lineHeight);
+    
+    currentY += lineHeight * 3;
+    
+    // Shooter enemy
+    fill(50, 100, 200);
+    ellipse(x - w/4, currentY + 10, 20);
+    fill(this.colors.text);
+    text("Shooter Enemy - 2 hit points", x - w/4 + 20, currentY);
+    text("Shoots projectiles at player", x - w/4 + 20, currentY + lineHeight);
+    
+    currentY += lineHeight * 3;
+    
+    // Bomber enemy
+    fill(100, 50, 150);
+    ellipse(x - w/4, currentY + 10, 20);
+    fill(this.colors.text);
+    text("Bomber Enemy - 3 hit points", x - w/4 + 20, currentY);
+    text("Slow but tough, charges at player", x - w/4 + 20, currentY + lineHeight);
+    
+    currentY += lineHeight * 3;
+    
+    // Zigzag enemy
+    fill(50, 200, 100);
+    ellipse(x - w/4, currentY + 10, 20);
+    fill(this.colors.text);
+    text("Zigzag Enemy - 1 hit point", x - w/4 + 20, currentY);
+    text("Fast and erratic movement", x - w/4 + 20, currentY + lineHeight);
+  }
+  
+  displayPowerupGuide(x, y, w, h) {
+    textAlign(CENTER, TOP);
+    textSize(24);
+    fill(this.colors.text);
+    text("POWERUPS", x, y);
+    
+    textAlign(LEFT, TOP);
+    textSize(16);
+    const lineHeight = 24;
+    let currentY = y + 40;
+    
+    // Triple shot
+    fill(100, 200, 255);
+    ellipse(x - w/4, currentY + 10, 20);
+    fill(this.colors.text);
+    text("Triple Shot", x - w/4 + 20, currentY);
+    text("Fire 3 projectiles at once", x - w/4 + 20, currentY + lineHeight);
+    
+    currentY += lineHeight * 3;
+    
+    // Power shot
+    fill(255, 100, 100);
+    ellipse(x - w/4, currentY + 10, 20);
+    fill(this.colors.text);
+    text("Power Shot", x - w/4 + 20, currentY);
+    text("Increased damage", x - w/4 + 20, currentY + lineHeight);
+    
+    currentY += lineHeight * 3;
+    
+    // Shield
+    fill(100, 255, 100);
+    ellipse(x - w/4, currentY + 10, 20);
+    fill(this.colors.text);
+    text("Shield", x - w/4 + 20, currentY);
+    text("Temporary invulnerability", x - w/4 + 20, currentY + lineHeight);
+    
+    currentY += lineHeight * 3;
+    
+    // Extra info
+    fill(this.colors.scoreText);
+    text("Powerups last until you take", x - w/4, currentY);
+    text("damage or collect a new one", x - w/4, currentY + lineHeight);
+  }
+  
+  displayControlsGuide(x, y, w, h) {
+    textAlign(CENTER, TOP);
+    textSize(24);
+    fill(this.colors.text);
+    text("CONTROLS", x, y);
+    
+    textAlign(CENTER, TOP);
+    textSize(16);
+    const lineHeight = 24;
+    let currentY = y + 40;
+    
+    fill(this.colors.text);
+    text("Move: Arrow Keys or WASD", x, currentY);
+    text("Shoot: Left Mouse Button or Spacebar", x, currentY + lineHeight);
+    text("Pause: ESC key", x, currentY + lineHeight * 2);
   }
 } 

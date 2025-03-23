@@ -27,15 +27,10 @@ class Player {
     // Powerups
     this.activePowerups = {
       tripleShot: false,
+      powerShot: false,
       shield: false,
       speedBoost: false
     };
-    this.powerupTimers = {
-      tripleShot: 0,
-      shield: 0,
-      speedBoost: 0
-    };
-    this.POWERUP_DURATION = 600; // 10 seconds at 60fps
     
     // Animation
     this.thrustAnimation = 0;
@@ -60,10 +55,10 @@ class Player {
     this.vel.limit(currentMaxSpeed);
     this.pos.add(this.vel);
     
-    // Add drag
+    // Apply friction to slow down when not accelerating
     this.vel.mult(0.9);
     
-    // Keep player on screen
+    // Keep player within boundaries
     this.pos.x = constrain(this.pos.x, this.size / 2, width - this.size / 2);
     this.pos.y = constrain(this.pos.y, this.size / 2, height - this.size / 2);
     
@@ -72,64 +67,85 @@ class Player {
       this.shootCooldown--;
     }
     
-    // Update invulnerability
+    // Update invulnerability state
     if (this.isInvulnerable) {
       this.invulnerabilityTimer--;
-      if (this.invulnerabilityTimer <= 0) {
-        this.isInvulnerable = false;
-      }
-    }
-    
-    // Calculate animation values
-    this.thrustAnimation = (this.thrustAnimation + 0.2) % TWO_PI;
-    
-    // Calculate angle based on movement
-    if (this.vel.mag() > 0.5) {
-      this.targetAngle = this.vel.heading() + HALF_PI;
-    }
-    
-    // Smooth angle transition
-    const angleDiff = this.targetAngle - this.angle;
-    if (abs(angleDiff) > 0.05) {
-      this.angle += angleDiff * 0.1;
-    }
-    
-    // Update powerups
-    this.updatePowerups();
-  }
-  
-  updatePowerups() {
-    // Check each powerup and decrease timer
-    for (const powerup in this.activePowerups) {
-      if (this.activePowerups[powerup]) {
-        this.powerupTimers[powerup]--;
-        if (this.powerupTimers[powerup] <= 0) {
-          this.activePowerups[powerup] = false;
+      
+      // Shield powerup replaces invulnerability timer
+      if (!this.activePowerups.shield) {
+        if (this.invulnerabilityTimer <= 0) {
+          this.isInvulnerable = false;
         }
       }
     }
+    
+    // Update animation timers
+    this.thrustAnimation += 0.2;
+    
+    // Gradually rotate toward target angle
+    const angleDiff = this.targetAngle - this.angle;
+    this.angle += angleDiff * 0.1;
   }
   
   applyPowerup(type) {
+    // Clear current powerups of the same category
+    if (type === 'tripleShot' || type === 'powerShot') {
+      this.activePowerups.tripleShot = false;
+      this.activePowerups.powerShot = false;
+    } else if (type === 'shield' || type === 'speedBoost') {
+      this.activePowerups.shield = false;
+      this.activePowerups.speedBoost = false;
+    }
+    
+    // Apply the new powerup
     switch(type) {
       case 'tripleShot':
         this.activePowerups.tripleShot = true;
-        this.powerupTimers.tripleShot = this.POWERUP_DURATION;
+        break;
+      case 'powerShot':
+        this.activePowerups.powerShot = true;
         break;
       case 'shield':
         this.activePowerups.shield = true;
-        this.powerupTimers.shield = this.POWERUP_DURATION;
+        this.isInvulnerable = true;
         break;
       case 'speedBoost':
         this.activePowerups.speedBoost = true;
-        this.powerupTimers.speedBoost = this.POWERUP_DURATION;
         break;
-      case 'health':
-        this.health = min(this.maxHealth, this.health + 2);
-        break;
-      case 'extraLife':
-        this.lives++;
-        break;
+    }
+  }
+  
+  takeDamage(amount) {
+    // If invulnerable, don't take damage
+    if (this.isInvulnerable) return;
+    
+    // Apply damage
+    this.health -= amount;
+    
+    // Reset all powerups when taking damage
+    this.clearPowerups();
+    
+    // Apply screen shake
+    applyScreenShake(10, 5);
+    
+    // Start invulnerability period
+    this.isInvulnerable = true;
+    this.invulnerabilityTimer = this.invulnerabilityDuration;
+    
+    // If health depleted, lose a life and reset health
+    if (this.health <= 0) {
+      this.lives--;
+      
+      if (this.lives > 0) {
+        this.health = this.maxHealth;
+      }
+    }
+  }
+  
+  clearPowerups() {
+    // Clear all active powerups
+    for (const powerup in this.activePowerups) {
+      this.activePowerups[powerup] = false;
     }
   }
   
@@ -293,48 +309,6 @@ class Player {
       
       // Create muzzle flash effect
       game.createExplosion(this.pos.x, this.pos.y - this.size/2, 5, 5, color(255, 200, 50));
-    }
-  }
-  
-  takeDamage(amount) {
-    // If shield is active, don't take damage
-    if (this.activePowerups.shield) {
-      return;
-    }
-    
-    // If already invulnerable, don't take damage
-    if (this.isInvulnerable) {
-      return;
-    }
-    
-    // Apply damage
-    this.health -= amount;
-    
-    // Check if health is depleted
-    if (this.health <= 0) {
-      this.loseLife();
-    }
-    
-    // Make player invulnerable briefly
-    this.isInvulnerable = true;
-    this.invulnerabilityTimer = this.invulnerabilityDuration;
-  }
-  
-  loseLife() {
-    this.lives--;
-    
-    // Create big explosion
-    game.createExplosion(this.pos.x, this.pos.y, 30, this.size, color(255, 200, 50));
-    applyScreenShake(20, 30);
-    
-    // If still has lives, restore health
-    if (this.lives > 0) {
-      this.health = this.maxHealth;
-      
-      // Reset all powerups
-      for (const powerup in this.activePowerups) {
-        this.activePowerups[powerup] = false;
-      }
     }
   }
   

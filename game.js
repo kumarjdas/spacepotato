@@ -245,13 +245,14 @@ class Game {
       for (let j = this.projectiles.length - 1; j >= 0; j--) {
         const projectile = this.projectiles[j];
         
-        // More lenient collision check for projectiles
+        // Calculate distance between projectile and enemy
         const distance = dist(projectile.pos.x, projectile.pos.y, enemy.pos.x, enemy.pos.y);
-        // Use a fixed distance for more consistent hits
-        const hitDistance = 30; // Fixed distance for hit detection
         
-        if (distance < hitDistance) {
-          console.log(`HIT! Enemy health before: ${enemy.health}`);
+        // Use the hitbox sizes to determine collision
+        const combinedRadius = (projectile.hitboxSize / 2) + (enemy.hitboxSize / 2);
+        
+        if (distance < combinedRadius) {
+          console.log(`HIT! Type: ${enemy.type}, Enemy health before: ${enemy.health}, damage: ${projectile.damage}`);
           
           // Apply damage to enemy
           enemy.health -= projectile.damage;
@@ -396,9 +397,20 @@ class Game {
     // Lives
     this.displayLives();
     
-    // Help button
-    textSize(16);
-    if (this.displayButton("?", width - 30, 60, 30, 30)) {
+    // Help button - drawn last so it's on top of everything
+    fill(this.colors.buttonFill);
+    stroke(255);
+    strokeWeight(1);
+    ellipse(width - 30, 30, 30, 30);
+    
+    fill(255);
+    noStroke();
+    textAlign(CENTER, CENTER);
+    textSize(20);
+    text("?", width - 30, 30);
+    
+    // Check if help button was clicked
+    if (dist(mouseX, mouseY, width - 30, 30) < 15 && mouseIsPressed) {
       this.gameState = this.GAME_HELP;
     }
   }
@@ -507,7 +519,10 @@ class Game {
     
     // Show high scores if requested
     if (this.showHighScores) {
-      this.displayHighScores();
+      // Back button on high scores screen
+      if (this.displayButton("BACK", width / 2, height * 0.85, 150, 40)) {
+        this.showHighScores = false;
+      }
     }
   }
   
@@ -653,7 +668,6 @@ class Game {
         
         // Show high scores if requested
         if (this.showHighScores) {
-          this.displayHighScores();
           if (this.displayButton("BACK", width / 2, height * 0.85, 150, 40)) {
             this.showHighScores = false;
           }
@@ -662,14 +676,11 @@ class Game {
         break;
         
       case this.GAME_PLAYING:
-        // Check if help button was clicked (already handled in displayHUD)
-        // Otherwise shoot
-        const helpButtonX = width - 30;
-        const helpButtonY = 60;
-        const helpButtonSize = 30;
-        if (dist(mouseX, mouseY, helpButtonX, helpButtonY) < helpButtonSize) {
-          // Already handled in displayHUD
+        // Check if help button was clicked
+        if (dist(mouseX, mouseY, width - 30, 30) < 15) {
+          this.gameState = this.GAME_HELP;
         } else {
+          // Otherwise shoot
           this.player.shoot();
           this.playSound("shoot");
         }

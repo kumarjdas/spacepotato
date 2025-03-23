@@ -4,8 +4,10 @@ class Projectile {
     this.pos = createVector(x, y);
     this.vel = createVector(vx, vy);
     this.size = 15;
-    this.hitboxSize = this.size * 2.0; // Greatly increase hitbox for more reliable collisions
+    this.hitboxSize = this.size * 0.8; // More accurate hitbox size
     this.damage = 1;
+    
+    console.log(`Created projectile at (${x},${y}) with hitboxSize: ${this.hitboxSize}`);
     
     // Visual properties
     this.rotation = random(TWO_PI); // Random initial rotation

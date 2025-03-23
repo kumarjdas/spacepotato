@@ -255,12 +255,39 @@ class Game {
       enemy.update();
       
       // Check collision with player
-      if (this.checkCollision(enemy, this.player) && !this.player.isInvulnerable) {
-        this.player.takeDamage(1);
-        this.createExplosion(enemy.pos.x, enemy.pos.y, 10, enemy.size);
-        this.enemies.splice(i, 1);
-        applyScreenShake(10, 10);
-        this.playSound("explosion");
+      if (this.checkCollision(enemy, this.player)) {
+        if (this.player.activePowerups.shield) {
+          // Player has shield - damage the enemy instead
+          enemy.health -= 1;
+          
+          // Create visual effect for shield collision
+          this.createExplosion(enemy.pos.x, enemy.pos.y, 10, enemy.size, color(100, 150, 255));
+          applyScreenShake(5, 5);
+          
+          // Check if enemy is destroyed
+          if (enemy.health <= 0) {
+            // Award score and create explosion
+            this.score += enemy.scoreValue;
+            this.createExplosion(enemy.pos.x, enemy.pos.y, 15, enemy.size * 1.5);
+            
+            // Chance to drop powerup
+            if (random() < 0.2) {
+              this.powerups.push(new Powerup(enemy.pos.x, enemy.pos.y));
+            }
+            
+            // Remove the enemy
+            this.enemies.splice(i, 1);
+            applyScreenShake(5, 5);
+            this.playSound("explosion");
+          }
+        } else if (!this.player.isInvulnerable) {
+          // Normal collision - player takes damage
+          this.player.takeDamage(1);
+          this.createExplosion(enemy.pos.x, enemy.pos.y, 10, enemy.size);
+          this.enemies.splice(i, 1);
+          applyScreenShake(10, 10);
+          this.playSound("explosion");
+        }
         continue;
       }
       
@@ -341,7 +368,7 @@ class Game {
             message = "Power Shot: Projectiles deal double damage!";
             break;
           case 'shield':
-            message = "Shield: Temporary invulnerability!";
+            message = "Shield: 10 seconds of invulnerability. Ram enemies to destroy them!";
             break;
           case 'speedBoost':
             message = "Speed Boost: Move 50% faster!";
@@ -1142,13 +1169,23 @@ class Game {
     ellipse(x - w/4, currentY + 10, 20);
     fill(this.colors.text);
     text("Shield", x - w/4 + 20, currentY);
-    text("Temporary invulnerability", x - w/4 + 20, currentY + lineHeight);
+    text("10 seconds of invulnerability", x - w/4 + 20, currentY + lineHeight);
+    text("Ram enemies to destroy them", x - w/4 + 20, currentY + lineHeight * 2);
+    
+    currentY += lineHeight * 4;
+    
+    // Speed boost
+    fill(255, 255, 100);
+    ellipse(x - w/4, currentY + 10, 20);
+    fill(this.colors.text);
+    text("Speed Boost", x - w/4 + 20, currentY);
+    text("50% faster movement", x - w/4 + 20, currentY + lineHeight);
     
     currentY += lineHeight * 3;
     
     // Extra info
     fill(this.colors.scoreText);
-    text("Powerups last until you take", x - w/4, currentY);
+    text("Most powerups last until you take", x - w/4, currentY);
     text("damage or collect a new one", x - w/4, currentY + lineHeight);
   }
   

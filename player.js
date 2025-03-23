@@ -32,6 +32,14 @@ class Player {
       speedBoost: false
     };
     
+    // Powerup timers
+    this.powerupTimers = {
+      shield: 0
+    };
+    
+    // Powerup durations
+    this.SHIELD_DURATION = 600; // 10 seconds at 60fps
+    
     // Animation
     this.thrustAnimation = 0;
     this.angle = 0;
@@ -71,11 +79,22 @@ class Player {
     if (this.isInvulnerable) {
       this.invulnerabilityTimer--;
       
-      // Shield powerup replaces invulnerability timer
+      // If not shield-powered invulnerability, check timer
       if (!this.activePowerups.shield) {
         if (this.invulnerabilityTimer <= 0) {
           this.isInvulnerable = false;
         }
+      }
+    }
+    
+    // Update shield timer
+    if (this.activePowerups.shield) {
+      this.powerupTimers.shield--;
+      
+      if (this.powerupTimers.shield <= 0) {
+        this.activePowerups.shield = false;
+        this.isInvulnerable = false;
+        console.log("Shield expired");
       }
     }
     
@@ -107,6 +126,7 @@ class Player {
         break;
       case 'shield':
         this.activePowerups.shield = true;
+        this.powerupTimers.shield = this.SHIELD_DURATION;
         this.isInvulnerable = true;
         break;
       case 'speedBoost':

@@ -21,13 +21,36 @@ A custom web crawler project that efficiently navigates and indexes web content.
 - Project cards with descriptions and direct links
 - Custom styling with CSS variables
 
+## Repository Structure
+
+`spacepotato` and `crawlme` are sibling submodules at the repo root (crawlme does not live inside spacepotato).
+
+```
+kumarjdas.github.io/
+├── index.html          # Portfolio landing page
+├── README.md
+├── .gitignore
+├── .gitmodules         # Submodule definitions (spacepotato, crawlme)
+├── .nojekyll           # Disable Jekyll on GitHub Pages
+├── spacepotato/        # Submodule → github.com/kumarjdas/spacepotato
+│   ├── index.html      # Game entry point
+│   ├── sketch.js, game.js, player.js, ...
+│   └── ...
+└── crawlme/            # Submodule → github.com/kumarjdas/crawlme (alongside spacepotato)
+    ├── src/
+    ├── public/
+    ├── package.json
+    └── ...
+```
+
 ## Local Development
 
-1. Clone this repository: `git clone https://github.com/kumarjdas/kumarjdas.github.io.git`
-2. Navigate to the project directory: `cd kumarjdas.github.io`
-3. Open `index.html` in your browser to view the site
-4. Make changes to HTML/CSS as needed
-5. Commit and push changes to deploy to GitHub Pages
+1. Clone with submodules: `git clone --recurse-submodules https://github.com/kumarjdas/kumarjdas.github.io.git`
+2. If already cloned: `git submodule update --init --recursive`
+3. Navigate to the project directory: `cd kumarjdas.github.io`
+4. Open `index.html` in your browser to view the site
+5. Make changes to HTML/CSS as needed
+6. Commit and push changes to deploy to GitHub Pages
 
 ## Technologies Used
 

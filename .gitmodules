@@ -1,0 +1,3 @@
+[submodule "spacepotato"]
+	path = spacepotato
+	url = https://github.com/kumarjdas/spacepotato.git

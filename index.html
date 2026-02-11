@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,7 +8,8 @@
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
   <title>Kumar J Das - GitHub Projects</title>
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🥔</text></svg>">
+  <link rel="icon"
+    href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🥔</text></svg>">
   <style>
     :root {
       --primary: #ff9900;
@@ -16,13 +18,13 @@
       --text: #f5f5f5;
       --text-muted: #999;
     }
-    
+
     * {
       box-sizing: border-box;
       margin: 0;
       padding: 0;
     }
-    
+
     body {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       background: var(--bg-dark);
@@ -32,39 +34,40 @@
       display: flex;
       flex-direction: column;
     }
-    
+
     .container {
       max-width: 1000px;
       margin: 0 auto;
       padding: 2rem;
     }
-    
+
     header {
       text-align: center;
       margin-bottom: 3rem;
       padding-top: 2rem;
     }
-    
+
     h1 {
       font-size: 2.5rem;
       margin-bottom: 0.5rem;
       background: linear-gradient(90deg, #ff9900, #ff6a00);
+      background-clip: text;
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       display: inline-block;
     }
-    
+
     .subtitle {
       color: var(--text-muted);
       font-size: 1.2rem;
     }
-    
+
     .projects {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
       gap: 2rem;
     }
-    
+
     .project-card {
       background: var(--card-bg);
       border-radius: 12px;
@@ -75,31 +78,31 @@
       display: flex;
       flex-direction: column;
     }
-    
+
     .project-card:hover {
       transform: translateY(-8px);
       box-shadow: 0 12px 20px rgba(0, 0, 0, 0.4);
     }
-    
+
     .card-content {
       padding: 1.5rem;
       flex-grow: 1;
       display: flex;
       flex-direction: column;
     }
-    
+
     .project-card h2 {
       color: var(--primary);
       font-size: 1.6rem;
       margin-bottom: 1rem;
     }
-    
+
     .project-card p {
       margin-bottom: 1.5rem;
       color: var(--text-muted);
       flex-grow: 1;
     }
-    
+
     .card-link {
       display: inline-block;
       background: rgba(255, 153, 0, 0.15);
@@ -112,11 +115,11 @@
       text-align: center;
       margin-top: auto;
     }
-    
+
     .card-link:hover {
       background: rgba(255, 153, 0, 0.3);
     }
-    
+
     footer {
       margin-top: auto;
       text-align: center;
@@ -124,45 +127,49 @@
       color: var(--text-muted);
       font-size: 0.9rem;
     }
-    
+
     .footer-link {
       color: var(--primary);
       text-decoration: none;
     }
-    
+
     .footer-link:hover {
       text-decoration: underline;
     }
   </style>
 </head>
+
 <body>
   <div class="container">
     <header>
       <h1>Kumar J Das</h1>
       <p class="subtitle">Personal Development Projects</p>
     </header>
-    
+
     <div class="projects">
       <div class="project-card">
         <div class="card-content">
           <h2>🥔 Space Potato</h2>
-          <p>A space shooter arcade game where you control a potato-shaped spaceship firing french fries at various enemies. Features custom animations, progressive difficulty, and various powerups.</p>
+          <p>A space shooter arcade game where you control a potato-shaped spaceship firing french fries at various
+            enemies. Features custom animations, progressive difficulty, and various powerups.</p>
           <a href="spacepotato/" class="card-link">Launch Game</a>
         </div>
       </div>
-      
+
       <div class="project-card">
         <div class="card-content">
           <h2>🕸️ Crawlme</h2>
-          <p>A custom web crawler project that efficiently navigates and indexes web content. Built with performance and flexibility in mind.</p>
-          <a href="https://github.com/kumarjdas/crawlme" class="card-link" target="_blank" rel="noopener">View on GitHub</a>
+          <p>A custom web crawler project that efficiently navigates and indexes web content. Built with performance and
+            flexibility in mind.</p>
+          <a href="crawlme/" class="card-link">Launch App</a>
         </div>
       </div>
     </div>
   </div>
-  
+
   <footer>
     <p>&copy; 2023-2024 Kumar J Das | <a href="https://github.com/kumarjdas" class="footer-link">GitHub</a></p>
   </footer>
 </body>
-</html> 
+
+</html>

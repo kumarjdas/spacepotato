@@ -1,5 +1,21 @@
 # Why the redirect still happens (and how to fix it)
 
+## If you see "crawlme not found" with Deploy from a branch
+
+**Cause:** The branch being built is **update-spacepotato**, which still has the **crawlme** submodule. The crawlme repo doesn’t exist on GitHub, so the build fails.
+
+**Fix:** Use the **main** branch for deployment.
+
+1. Open **https://github.com/kumarjdas/kumarjdas.github.io/settings/pages**
+2. Under **Build and deployment** → **Source**, choose **Deploy from a branch**
+3. Set **Branch** to **`main`** (not `update-spacepotato`)
+4. Set **Folder** to **/ (root)**
+5. Click **Save**
+
+**main** has crawlme removed and only the **spacepotato** submodule, so the build will succeed.
+
+---
+
 ## What’s going on
 
 - **On GitHub:** The `main` branch has the **correct** `index.html` (portfolio page, no redirect). You can confirm: https://raw.githubusercontent.com/kumarjdas/kumarjdas.github.io/main/index.html
